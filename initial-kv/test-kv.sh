@@ -6,9 +6,3 @@ if ! [[ -x kv ]]; then
 fi
 
 ../tester/run-tests.sh $*
-
-
-
-
-
-
