@@ -1,0 +1,7 @@
+# Common ignores for all projects
+*.o
+
+# Project-specific ignores
+initial-kv/kv
+initial-kv/database.txt
+initial-kv/tests-out/
