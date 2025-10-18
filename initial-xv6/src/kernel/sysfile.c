@@ -8,8 +8,11 @@
 #include "file.h"
 #include "fcntl.h"
 #include "sysfunc.h"
+#include "spinlock.h"
 
+// Global counter for sys_read calls, protected by a spinlock for concurrency.
 int readcounter = 0;
+struct spinlock readcounterlock;
 
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
@@ -67,7 +70,9 @@ sys_read(void)
   int n;
   char *p;
 
+  acquire(&readcounterlock);
   readcounter++;
+  release(&readcounterlock);
 
   if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0)
     return -1;

@@ -4,12 +4,14 @@
 #include "mmu.h"
 #include "proc.h"
 #include "x86.h"
+#include "spinlock.h"
 
 static void bootothers(void);
 static void mpmain(void);
 void jmpkstack(void)  __attribute__((noreturn));
 void mainc(void);
 static void cinit(void);
+extern struct spinlock readcounterlock;
 
 // Bootstrap processor starts running C code here.
 // Allocate a real stack and switch to it, first
@@ -52,6 +54,7 @@ mainc(void)
   tvinit();        // trap vectors
   binit();         // buffer cache
   fileinit();      // file table
+  initlock(&readcounterlock, "readcounter");
   iinit();         // inode cache
   ideinit();       // disk
   if(!ismp)
