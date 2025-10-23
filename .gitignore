@@ -1,5 +1,6 @@
 # Common ignores for all projects
 *.o
+.vscode/
 
 # Project-specific ignores
 initial-kv/kv
