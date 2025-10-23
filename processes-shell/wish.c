@@ -110,6 +110,8 @@ int main(int argc, char *argv[]){
                         path[num_paths++] = strdup(tokens[i]);
                     }
                 }
+            } else if (strcmp(tokens[0], "loop") == 0) {
+
             } else
             {
                 char *exepath = build_executable_path(path, num_paths, tokens[0]);
@@ -242,14 +244,16 @@ void execute_command(char *exepath, char *tokens[], int num_tokens) {
             exit(1);
         }
 
-        (void) close(STDOUT_FILENO);
-
         int fd = open(tokens[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0666);
         if (fd < 0)
         {
             write(STDERR_FILENO, error_message, strlen(error_message));
             exit(1);
         }
+
+        (void) dup2(fd, STDOUT_FILENO);
+        (void) dup2(fd, STDERR_FILENO);
+        (void) close(fd);
     }
 
     execv(exepath, cmd_argv);
