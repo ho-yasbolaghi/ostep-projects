@@ -1,0 +1,2 @@
+loop 5 echo hello $loop
+exit

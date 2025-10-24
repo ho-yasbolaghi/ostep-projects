@@ -14,11 +14,13 @@ void free_array(char *array[], int size);
 int tokenize_line(char *line, char *tokens[]);
 char *build_executable_path(char *path[], int num_paths, char *exe);
 void execute_command(char *exepath, char *tokens[], int num_tokens) __attribute__((noreturn));
+pid_t command_handler(char *path[], int num_paths, char *tokens[], int num_tokens);
+pid_t execute_loop_command(char *path[], int num_paths, char *tokens[], int num_tokens);
 
 char error_message[30] = "An error has occurred\n";
 
 int main(int argc, char *argv[]){
-    char *path[MAX_PATHS]; // dynamic array?
+    char *path[MAX_PATHS]; // TODO: make dynamic to remove size limits
     int num_paths = 0;
     path[num_paths++] = strdup("/bin");
 
@@ -50,7 +52,7 @@ int main(int argc, char *argv[]){
 
     while ((nread = getline(&line, &len, stream)) != -1)
     {
-        char *commands[MAX_COMMANDS]; // dynamic array?
+        char *commands[MAX_COMMANDS]; // TODO: make dynamic to remove size limits
         int num_commands = 0;
 
         char *cmd;
@@ -63,7 +65,7 @@ int main(int argc, char *argv[]){
 
         for (int i = 0; i < num_commands; i++)
         {
-            char *tokens[MAX_TOKENS]; // dynamic array?
+            char *tokens[MAX_TOKENS]; // TODO: make dynamic to remove size limits
             int num_tokens = tokenize_line(commands[i], tokens);
 
             if (num_tokens == 0)
@@ -110,32 +112,23 @@ int main(int argc, char *argv[]){
                         path[num_paths++] = strdup(tokens[i]);
                     }
                 }
-            } else if (strcmp(tokens[0], "loop") == 0) {
-
+            } else if (strcmp(tokens[0], "loop") == 0)
+            {
+                pid_t rc = execute_loop_command(path, num_paths, tokens, num_tokens);
+                if (rc > 0) {
+                    num_children++;
+                } else {
+                    write(STDERR_FILENO, error_message, strlen(error_message));
+                }
             } else
             {
-                char *exepath = build_executable_path(path, num_paths, tokens[0]);
+                pid_t rc = command_handler(path, num_paths, tokens, num_tokens);
 
-                if (exepath == NULL)
-                {
-                    write(STDERR_FILENO, error_message, strlen(error_message));
-                    continue;
-                }
-
-                pid_t rc = fork();
-
-                if (rc == 0)
-                {
-                    execute_command(exepath, tokens, num_tokens);
-                } else if (rc > 0)
-                {
+                if (rc > 0) {
                     num_children++;
-                } else
-                {
+                } else if (rc < 0) {
                     write(STDERR_FILENO, error_message, strlen(error_message));
                 }
-
-                free(exepath);
             }
         }
 
@@ -220,7 +213,7 @@ char *build_executable_path(char *path[], int num_paths, char *exe) {
 }
 
 void execute_command(char *exepath, char *tokens[], int num_tokens) {
-    char *cmd_argv[MAX_ARGS]; // dynamic array?
+    char *cmd_argv[MAX_ARGS]; // TODO: make dynamic to remove size limits
     cmd_argv[0] = strdup(tokens[0]);
     int i = 1;
     for (; i < num_tokens; i++)
@@ -259,4 +252,72 @@ void execute_command(char *exepath, char *tokens[], int num_tokens) {
     execv(exepath, cmd_argv);
     free_array(cmd_argv, i); // technically unnecessary before exit
     exit(1);
+}
+
+pid_t command_handler(char *path[], int num_paths, char *tokens[], int num_tokens) {
+    char *exepath = build_executable_path(path, num_paths, tokens[0]);
+
+    if (exepath == NULL)
+    {
+        return -1;
+    }
+
+    pid_t rc = fork();
+
+    if (rc == 0)
+    {
+        execute_command(exepath, tokens, num_tokens);
+    } else if (rc > 0)
+    {
+        free(exepath);
+        return rc;
+    }
+
+    free(exepath);
+    return -1;
+}
+
+pid_t execute_loop_command(char *path[], int num_paths, char *tokens[], int num_tokens) {
+    if (num_tokens < 3) {
+        return -1;
+    }
+
+    int loop_count = atoi(tokens[1]);
+    if (loop_count <= 0) {
+        return -1;
+    }
+
+    pid_t rc = fork();
+
+    if (rc > 0) {
+        return rc;
+    } else if (rc < 0) {
+        return -1;
+    }
+
+    for (int loop_var = 1; loop_var <= loop_count; loop_var++) {
+        char loop_str[11];
+        sprintf(loop_str, "%d", loop_var);
+
+        char *loop_tokens[MAX_TOKENS];
+        int loop_num_tokens = 0;
+
+        for (int i = 2; i < num_tokens; i++) {
+            if (strcmp(tokens[i], "$loop") == 0) {
+                loop_tokens[loop_num_tokens++] = loop_str;
+            } else {
+                loop_tokens[loop_num_tokens++] = tokens[i];
+            }
+        }
+
+        rc = command_handler(path, num_paths, loop_tokens, loop_num_tokens);
+
+        if (rc > 0) {
+            (void) wait(NULL);
+        } else if (rc < 0) {
+            write(STDERR_FILENO, error_message, strlen(error_message));
+        }
+    }
+
+    exit(0);
 }
