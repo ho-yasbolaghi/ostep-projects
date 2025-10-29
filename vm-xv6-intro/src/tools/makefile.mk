@@ -13,6 +13,9 @@ tools/mkfs: tools/mkfs.o
 	$(CC) $(LDFLAGS) $< -o $@
 
 # build object files from c files
+tools/mkfs.o: tools/mkfs.c
+	$(CC) -c $(CPPFLAGS) $(TOOLS_CPPFLAGS) $(CFLAGS) $(TOOLS_CLFAGS) -Wno-error=deprecated-declarations -o $@ $<
+
 tools/%.o: tools/%.c
 	$(CC) -c $(CPPFLAGS) $(TOOLS_CPPFLAGS) $(CFLAGS) $(TOOLS_CLFAGS) -o $@ $<
 
@@ -20,4 +23,3 @@ tools/%.o: tools/%.c
 tools/%.d: tools/%.c
 	$(CC) $(CPPFLAGS) $(TOOLS_CPPFLAGS) $(CFLAGS) $(TOOLS_CFLAGS) \
 	  -M -MG $< -MF $@ -MT $@ -MT $(<:.c=.o)
-
