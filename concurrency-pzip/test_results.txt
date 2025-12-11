@@ -1,0 +1,73 @@
+=== Building pzip ===
+
+=== Test 1: Small file ===
+pzip: test_small.txt (0.03 KB) → test_small.pzip
+Reader: finished producing 1 chunks
+Writer: finished — output written successfully
+pzip: done! Compressed 30 bytes → test_small.pzip
+-rw-r--r-- 1 parsa parsa 135 Dec 11 11:20 test_small.pzip
+-rw-r--r-- 1 parsa parsa  30 Dec 11 11:20 test_small.txt
+
+=== Test 2: Highly compressible (all zeros) ===
+pzip: test_zeros.bin (50.00 MB) → test_zeros.pzip
+Reader: finished producing 7 chunks
+Writer: finished — output written successfully
+pzip: done! Compressed 52428800 bytes → test_zeros.pzip
+-rw-r--r-- 1 parsa parsa 50M Dec 11 11:20 test_zeros.bin
+-rw-r--r-- 1 parsa parsa  35 Dec 11 11:20 test_zeros.pzip
+Compression ratio: 1497965.71x
+
+=== Test 3: Random data (incompressible) ===
+pzip: test_random.bin (10.00 MB) → test_random.pzip
+Reader: finished producing 2 chunks
+Writer: finished — output written successfully
+pzip: done! Compressed 10485760 bytes → test_random.pzip
+-rw-r--r-- 1 parsa parsa 10M Dec 11 11:20 test_random.bin
+-rw-r--r-- 1 parsa parsa 50M Dec 11 11:20 test_random.pzip
+Size ratio: 4.98x (expect >1.0 due to RLE overhead)
+
+=== Test 4: Text file ===
+pzip: test_words.txt (477.44 KB) → test_words.pzip
+Reader: finished producing 1 chunks
+Writer: finished — output written successfully
+pzip: done! Compressed 488894 bytes → test_words.pzip
+-rw-r--r-- 1 parsa parsa 2.4M Dec 11 11:20 test_words.pzip
+-rw-r--r-- 1 parsa parsa 478K Dec 11 11:20 test_words.txt
+
+=== Test 5: Large file (stress test) ===
+Compressing 500 MB...
+pzip: test_large.bin (500.00 MB) → test_large.pzip
+Reader: finished producing 63 chunks
+Writer: finished — output written successfully
+pzip: done! Compressed 524288000 bytes → test_large.pzip
+
+real	0m0.258s
+user	0m1.053s
+sys 0m0.011s
+-rw-r--r-- 1 parsa parsa 500M Dec 11 11:20 test_large.bin
+-rw-r--r-- 1 parsa parsa  315 Dec 11 11:20 test_large.pzip
+
+=== Test 6: Empty file ===
+Empty file
+-rw-r--r-- 1 parsa parsa 0 Dec 11 11:20 test_empty.txt
+Empty file handled correctly
+
+=== Test 7: Edge case - exactly CHUNK_SIZE (8MB) ===
+pzip: test_exact.bin (8.00 MB) → test_exact.pzip
+Reader: finished producing 1 chunks
+Writer: finished — output written successfully
+pzip: done! Compressed 8388608 bytes → test_exact.pzip
+-rw-r--r-- 1 parsa parsa 8.0M Dec 11 11:20 test_exact.bin
+-rw-r--r-- 1 parsa parsa    5 Dec 11 11:20 test_exact.pzip
+
+=== Test 8: Edge case - CHUNK_SIZE + 1 byte ===
+pzip: test_plus_one.bin (8.00 MB) → test_plus_one.pzip
+Reader: finished producing 2 chunks
+Writer: finished — output written successfully
+pzip: done! Compressed 8388609 bytes → test_plus_one.pzip
+-rw-r--r-- 1 parsa parsa 8.1M Dec 11 11:20 test_plus_one.bin
+-rw-r--r-- 1 parsa parsa   10 Dec 11 11:20 test_plus_one.pzip
+
+=== Cleanup ===
+
+=== All tests passed! ===
